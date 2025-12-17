@@ -1,31 +1,43 @@
-# Gunakan image PHP dengan FPM dan Nginx yang sudah terintegrasi
-FROM webdevops/php-nginx:8.3-alpine
+FROM php:8.3-fpm-alpine
 
-# Set working directory
-WORKDIR /app
-
-# INSTALL DEPENDENSI POSTGRESQL TERLEBIH DAHULU
-# Untuk Alpine Linux (image 'alpine'), pakai apk:
+# Install system dependencies
 RUN apk update && apk add --no-cache \
+    nginx \
+    supervisor \
     postgresql-dev \
-    postgresql-client \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && apk del --purge
+    curl \
+    git \
+    unzip
 
-# Salin kode aplikasi
-COPY . /app
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql
 
-# Install Composer dependencies
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Setup working directory
+WORKDIR /var/www
+
+# Copy application files
+COPY . .
+
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Setup permission untuk Laravel
-RUN chown -R application:application /app \
-    && chmod -R 755 /app/storage \
-    && chmod -R 755 /app/bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
 
-# Expose port 80
+# Copy configuration files
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Generate key on first run
+RUN php artisan key:generate --force
+
+# Expose port
 EXPOSE 80
 
-# Copy custom startup script
-COPY docker/start.sh /opt/docker/provision/entrypoint.d/99-laravel.sh
-RUN chmod +x /opt/docker/provision/entrypoint.d/99-laravel.sh
+# Start supervisor
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
