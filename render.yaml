@@ -1,20 +1,23 @@
+# render.yaml
 services:
   - type: web
     name: game-store-backend
     runtime: docker
-    dockerfilePath: ./Dockerfile
-    env: docker
+    repo: https://github.com/dzikriii24/backend-gamestore  # Ganti dengan repo kamu
+    branch: main
     plan: free
-    autoDeploy: true
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: false
+        value: "false"
       - key: LOG_CHANNEL
         value: stderr
-      - key: APP_URL
-        value: https://backend-gamestore.onrender.com
-    buildCommand: |
-      composer install --no-dev --optimize-autoloader --no-interaction
-    startCommand: sudo /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+    healthCheckPath: /api/health-check
+    autoDeploy: true
+
+databases:
+  - name: gamestoredb
+    plan: free
+    databaseName: gamestore
+    user: gamestore_user

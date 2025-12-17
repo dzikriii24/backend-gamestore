@@ -1,43 +1,26 @@
-FROM php:8.3-fpm-alpine
+# Dockerfile
+FROM richarvey/nginx-php-fpm:3.1.6
 
-# Install system dependencies
-RUN apk update && apk add --no-cache \
-    nginx \
-    supervisor \
-    postgresql-dev \
-    curl \
-    git \
-    unzip
+COPY . /var/www/html
+WORKDIR /var/www/html
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql
+# Environment variables
+ENV SKIP_COMPOSER 1
+ENV WEBROOT /var/www/html/public
+ENV PHP_ERRORS_STDERR 1
+ENV RUN_SCRIPTS 1
+ENV REAL_IP_HEADER 1
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Laravel production settings
+ENV APP_ENV production
+ENV APP_DEBUG false
+ENV LOG_CHANNEL stderr
+ENV COMPOSER_ALLOW_SUPERUSER 1
 
-# Setup working directory
-WORKDIR /var/www
+# Copy custom Nginx config
+COPY conf/nginx/nginx-site.conf /etc/nginx/sites-available/default.conf
 
-# Copy application files
-COPY . .
-
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage \
-    && chmod -R 755 /var/www/bootstrap/cache
-
-# Copy configuration files
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Generate key on first run
-RUN php artisan key:generate --force
-
-# Expose port
+# Expose port 80
 EXPOSE 80
 
-# Start supervisor
-CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/start.sh"]
