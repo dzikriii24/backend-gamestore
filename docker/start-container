@@ -1,20 +1,20 @@
-#!/bin/sh
+    #!/bin/sh
 
-echo "Generating Laravel application key..."
-php artisan key:generate --force --no-interaction
+    echo "Generating Laravel application key..."
+    php artisan key:generate --force --no-interaction
 
-echo "Caching configuration..."
-php artisan config:cache
+    echo "Caching configuration..."
+    php artisan config:cache
 
-echo "Caching routes..."
-php artisan route:cache
+    echo "Caching routes..."
+    php artisan route:cache
 
-echo "Caching views..."
-php artisan view:cache
+    echo "Caching views..."
+    php artisan view:cache
 
-# HANYA jalankan migrasi jika ada environment variable khusus
-# JANGAN aktifkan ini di production kecuali kamu yakin!
-# php artisan migrate --force --no-interaction
+    # HANYA jalankan migrasi jika ada environment variable khusus
+    # JANGAN aktifkan ini di production kecuali kamu yakin!
+    # php artisan migrate --force --no-interaction
 
-echo "Starting supervisor..."
-exec "$@"
+    echo "Starting supervisor..."
+    exec "$@"
