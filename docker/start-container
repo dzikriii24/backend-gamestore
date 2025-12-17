@@ -1,13 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-# Exit script jika ada command yang gagal
-set -e
-
-echo "Running composer install..."
-composer install --no-dev --no-interaction --optimize-autoloader
-
-echo "Generating application key..."
-php artisan key:generate --force
+echo "Generating Laravel application key..."
+php artisan key:generate --force --no-interaction
 
 echo "Caching configuration..."
 php artisan config:cache
@@ -18,8 +12,9 @@ php artisan route:cache
 echo "Caching views..."
 php artisan view:cache
 
-echo "Running migrations..."
-php artisan migrate --force
+# HANYA jalankan migrasi jika ada environment variable khusus
+# JANGAN aktifkan ini di production kecuali kamu yakin!
+# php artisan migrate --force --no-interaction
 
-echo "Starting PHP-FPM..."
-exec php-fpm
+echo "Starting supervisor..."
+exec "$@"
